@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Digital Book</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Georgia, serif;
+      background: #f4f1ea;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background: #1e1e1e;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .chapter-list {
+      flex: 1;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+
+    .chapter {
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-bottom: 5px;
+    }
+
+    .chapter:hover {
+      background: #333;
+    }
+
+    .chapter.active {
+      background: #555;
+    }
+
+    button {
+      padding: 8px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .add-btn {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .preview-btn {
+      background: #2196F3;
+      color: white;
+    }
+
+    /* Writing Area */
+    .editor {
+      flex: 1;
+      padding: 60px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    #chapterTitle {
+      font-size: 28px;
+      border: none;
+      outline: none;
+      width: 100%;
+      margin-bottom: 20px;
+      background: transparent;
+      font-weight: bold;
+    }
+
+    #content {
+      width: 100%;
+      height: 80%;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 18px;
+      line-height: 1.6;
+      background: transparent;
+    }
+
+    /* Preview Mode */
+    .preview {
+      background: white;
+      padding: 80px;
+      max-width: 800px;
+      margin: auto;
+      font-size: 20px;
+      line-height: 1.8;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2 id="bookTitle" contenteditable="true">My Book</h2>
+    <div class="chapter-list" id="chapterList"></div>
+    <button class="add-btn" onclick="addChapter()">+ Add Chapter</button>
+    <button class="preview-btn" onclick="togglePreview()">Preview</button>
+  </div>
+
+  <div class="editor" id="editor">
+    <input id="chapterTitle" placeholder="Chapter Title..." />
+    <textarea id="content" placeholder="Start writing your story..."></textarea>
+  </div>
+
+<script>
+let book = JSON.parse(localStorage.getItem("myBook")) || {
+  title: "My Book",
+  chapters: [
+    { title: "Chapter 1", content: "" }
+  ]
+};
+
+let currentChapter = 0;
+let previewMode = false;
+
+const chapterList = document.getElementById("chapterList");
+const chapterTitleInput = document.getElementById("chapterTitle");
+const contentInput = document.getElementById("content");
+const bookTitle = document.getElementById("bookTitle");
+const editor = document.getElementById("editor");
+
+function saveBook() {
+  localStorage.setItem("myBook", JSON.stringify(book));
+}
+
+function renderChapters() {
+  chapterList.innerHTML = "";
+  book.chapters.forEach((chapter, index) => {
+    const div = document.createElement("div");
+    div.textContent = chapter.title;
+    div.className = "chapter" + (index === currentChapter ? " active" : "");
+    div.onclick = () => switchChapter(index);
+    chapterList.appendChild(div);
+  });
+}
+
+function switchChapter(index) {
+  currentChapter = index;
+  loadChapter();
+  renderChapters();
+}
+
+function loadChapter() {
+  chapterTitleInput.value = book.chapters[currentChapter].title;
+  contentInput.value = book.chapters[currentChapter].content;
+}
+
+function addChapter() {
+  book.chapters.push({
+    title: "New Chapter",
+    content: ""
+  });
+  currentChapter = book.chapters.length - 1;
+  saveBook();
+  renderChapters();
+  loadChapter();
+}
+
+chapterTitleInput.addEventListener("input", () => {
+  book.chapters[currentChapter].title = chapterTitleInput.value;
+  renderChapters();
+  saveBook();
+});
+
+contentInput.addEventListener("input", () => {
+  book.chapters[currentChapter].content = contentInput.value;
+  saveBook();
+});
+
+bookTitle.addEventListener("input", () => {
+  book.title = bookTitle.textContent;
+  saveBook();
+});
+
+function togglePreview() {
+  previewMode = !previewMode;
+
+  if (previewMode) {
+    editor.innerHTML = `
+      <div class="preview">
+        <h1>${book.title}</h1>
+        ${book.chapters.map(c => `
+          <h2>${c.title}</h2>
+          <p>${c.content.replace(/\n/g, "<br>")}</p>
+        `).join("")}
+      </div>
+    `;
+  } else {
+    location.reload();
+  }
+}
+
+renderChapters();
+loadChapter();
+bookTitle.textContent = book.title;
+</script>
+
+</body>
+</html>
